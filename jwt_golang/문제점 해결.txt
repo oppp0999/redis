@@ -27,3 +27,12 @@ go get github.com/twinj/uuid
 
 5. JWT 매타데이터의 저장 함수 구현
 리프래시 토큰 또는 액세스 토큰의 만료시간이 지나면 도달하면 JWT가 Redis에서 자동으로 삭제
+
+6. login기능 수정
+login함수에서 createauth 를 호출
+tokens := map[string]string{
+		"access_token":  ts.AccessToken,
+		"refresh_token": ts.RefreshToken,
+	}
+을 통해서 다음 토큰들을 redis에 저장할 수 있다.
+그리고 redis ui를 통해서 ttl -> 만료기간을 직접 확인할 수 있다.

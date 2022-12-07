@@ -4,13 +4,12 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/twinj/uuid"
+	redis "jwt_golnag/common"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
-
-	"jwt_golnag/common"
 )
 
 // 3. 토큰 정의, 만료 기간 및 UUID 구조체
@@ -54,12 +53,20 @@ func Login(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, "Please provide valid login details")
 		return
 	}
-	token, err := CreateToken(test_user.ID)
+	ts, err := CreateToken(test_user.ID)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, token)
+	saveErr := CreateAuth(test_user.ID, ts)
+	if saveErr != nil {
+		c.JSON(http.StatusUnprocessableEntity, saveErr.Error())
+	}
+	tokens := map[string]string{
+		"access_token":  ts.AccessToken,
+		"refresh_token": ts.RefreshToken,
+	}
+	c.JSON(http.StatusOK, tokens)
 }
 
 // 4. CreateToken method
@@ -106,11 +113,11 @@ func CreateAuth(userid uint64, td *TokenDetails) error {
 	rt := time.Unix(td.RtExpires, 0)
 	now := time.Now()
 
-	errAccess := common.Client.Set(td.AccessUuid, strconv.Itoa(int(userid)), at.Sub(now)).Err()
+	errAccess := redis.Client.Set(td.AccessUuid, strconv.Itoa(int(userid)), at.Sub(now)).Err()
 	if errAccess != nil {
 		return errAccess
 	}
-	errRefresh := common.Client.Set(td.RefreshUuid, strconv.Itoa(int(userid)), rt.Sub(now)).Err()
+	errRefresh := redis.Client.Set(td.RefreshUuid, strconv.Itoa(int(userid)), rt.Sub(now)).Err()
 	if errRefresh != nil {
 		return errRefresh
 	}
