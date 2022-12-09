@@ -43,3 +43,9 @@ tokens := map[string]string{
 VerifyToken안에 ExtractToken을 호출합니다. ExtractToken은 토큰을 가져온 다음 signing method를 검증
 그런 다음 TokenValid 함수를 사용하여 토큰이 만료가 되었는지 검사
 ExtractTokenMetadata 함수는 AccessDetails(구조체)를 반환합니다. 이 구조에는 Redis에서 조회해야 하는 메타데이터(access_uuid, user_id)가 포함
+
+
+8. 로그아웃 구현
+-> 로그아웃을 하면 redis에있는 메타 데이터도 추가로 삭제하는 방식을 구현
+deleteauth 함수는 매개 변수로 전달된 uuid에 해당하는 redis의 레코드를 삭제
+logout 기능은 메타데이터를 추출하고 jwt를 무효로 만든다.

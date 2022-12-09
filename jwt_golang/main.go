@@ -235,10 +235,35 @@ func CreateTodo(c *gin.Context) {
 	c.JSON(http.StatusCreated, td)
 }
 
+// 8.로그아웃 구현을 위한 삭제 메소드
+func DeleteAuth(givenUuid string) (int64, error) {
+	deleted, err := redis.Client.Del(givenUuid).Result()
+	if err != nil {
+		return 0, err
+	}
+	return deleted, nil
+}
+
+// 8. 로그아웃 메소드
+func Logout(c *gin.Context) {
+	au, err := ExtractTokenMetadata(c.Request)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	deleted, delErr := DeleteAuth(au.AccessUuid)
+	if delErr != nil || deleted == 0 {
+		c.JSON(http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	c.JSON(http.StatusOK, "Successfully logged out")
+}
+
 // main
 func main() {
 	router.POST("/login", Login)
 	router.POST("/todo", CreateTodo)
+	router.POST("/logout", Logout)
 
 	log.Fatal(router.Run(":8080"))
 }
